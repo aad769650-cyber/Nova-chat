@@ -65,14 +65,14 @@ import { cn } from "@/lib/utils";
 // they exist.
 // ---------------------------------------------------------------------------
 
-const PLACEHOLDER_HREF = "/thatlink";
+const PLACEHOLDER_HREF = "/chat";
 
 const BRAND_NAME = "NovaChat";
-const HEADER_TITLE = "Untitled conversation";
+const HEADER_TITLE = " conversation";
 const CONNECTION_STATUS = "online"; // "online" | "syncing" | "offline"
 const CURRENT_USER = {
-  name: "Ada Lovelace",
-  email: "ada@lumen.ai",
+  name: "mahar dev",
+  email: "mahar@dev.ai",
   avatarUrl: "https://placehold.co/64x64",
 };
 const DEFAULT_MODEL = "claude-4";
@@ -229,58 +229,7 @@ export default function Header() {
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {/* ---------------- Model selector (click or hover) ---------------- */}
-            <DropdownMenu open={modelMenuOpen} onOpenChange={setModelMenuOpen}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onMouseEnter={openModelMenuOnHover}
-                      onMouseLeave={closeModelMenuOnLeave}
-                      className="hidden h-9 items-center gap-2 rounded-xl border-neutral-200 bg-white/60 px-3 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200 dark:hover:bg-white/10 md:flex"
-                    >
-                      <CurrentModelIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      {currentModel.name}
-                      <ChevronDown className="h-3.5 w-3.5 text-neutral-400" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Switch AI model</TooltipContent>
-              </Tooltip>
-
-              <DropdownMenuContent
-                align="start"
-                onMouseEnter={openModelMenuOnHover}
-                onMouseLeave={closeModelMenuOnLeave}
-                className="w-64 rounded-xl border-neutral-200 dark:border-white/10 dark:bg-neutral-900"
-              >
-                <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wider text-neutral-400">
-                  Model
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {AI_MODELS.map((m) => {
-                  const active = m.id === model;
-                  return (
-                    <DropdownMenuItem
-                      key={m.id}
-                      onClick={() => setModel(m.id)}
-                      className="flex items-center gap-3 rounded-lg py-2"
-                    >
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-500/10">
-                        <m.icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      </span>
-                      <span className="flex flex-1 flex-col">
-                        <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                          {m.name}
-                        </span>
-                        <span className="text-xs text-neutral-400">{m.description}</span>
-                      </span>
-                      {active && <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
+       
 
             {/* ---------------- Search ---------------- */}
             <Tooltip>
@@ -328,7 +277,7 @@ export default function Header() {
                   variant="ghost"
                   className="hidden h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white lg:inline-flex"
                 >
-                  <Link href={CANVAS_HREF}>
+                  <Link href={CANVAS_HREF} className="flex gap-2">
                     <PenSquare className="h-4 w-4" />
                     {CANVAS_LABEL}
                   </Link>
@@ -408,7 +357,7 @@ export default function Header() {
                   asChild
                   className="hidden h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-3 text-sm font-medium text-white shadow-sm shadow-blue-600/20 transition-transform hover:opacity-95 active:scale-[0.97] sm:px-4 md:inline-flex"
                 >
-                  <Link href={PLACEHOLDER_HREF}>
+                  <Link href={PLACEHOLDER_HREF} className="flex justify-between gap-2">
                     <Plus className="h-4 w-4" />
                     New Chat
                   </Link>
@@ -581,8 +530,8 @@ export default function Header() {
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild className="gap-2">
-                  <Link href={PLACEHOLDER_HREF}>
-                    <Plus className="h-4 w-4" /> New chat
+                  <Link href={PLACEHOLDER_HREF} className="flex justify-center ">
+                    <Plus className="h-4 w-4" /> <span>New chat</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="gap-2">

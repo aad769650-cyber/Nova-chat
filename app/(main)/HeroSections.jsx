@@ -636,10 +636,9 @@ export default function HeroSection({
             <RippleButton
               href={startChattingHref}
               ariaLabel="Start chatting"
-              className="h-12 rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 px-6 text-sm font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.6)] transition-transform hover:scale-[1.02] hover:shadow-[0_0_55px_-6px_rgba(139,92,246,0.75)] active:scale-[0.98]"
+              className="h-12  rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 px-6 text-sm font-semibold text-white shadow-[0_0_40px_-8px_rgba(139,92,246,0.6)] transition-transform hover:scale-[1.02] hover:shadow-[0_0_55px_-6px_rgba(139,92,246,0.75)] active:scale-[0.98]"
             >
-              Start Chatting
-              <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <span>Start Chatting</span>
             </RippleButton>
 
             <Button
@@ -647,7 +646,7 @@ export default function HeroSection({
               variant="outline"
               className="h-12 rounded-2xl border-white/15 bg-white/[0.03] px-6 text-sm font-semibold text-neutral-100 backdrop-blur-xl transition-colors hover:bg-white/[0.08]"
             >
-              <Link href={watchDemoHref} aria-label="Watch demo">
+              <Link href={watchDemoHref} aria-label="Watch demo" className="flex gap-2">
                 <Play className="mr-1.5 h-4 w-4" />
                 Watch Demo
               </Link>
