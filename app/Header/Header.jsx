@@ -1,7 +1,7 @@
 // components/chat/Header.jsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -22,6 +22,9 @@ import {
   Zap,
   MessageSquare,
   MoreHorizontal,
+  PenSquare,
+  Puzzle,
+  ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,12 +60,14 @@ import { cn } from "@/lib/utils";
 // Everything below is hardcoded — this component takes NO props. Swap the
 // constants for real data (or wire up a fetch/store) when you plug it in.
 // Every item that behaves like navigation (new chat, search results,
-// notifications, settings, billing, log out) routes to the placeholder
-// path "/thatlink" — point those at your real routes when they exist.
+// notifications, settings, billing, log out, canvas, extensions) routes to
+// the placeholder path "/thatlink" — point those at your real routes when
+// they exist.
 // ---------------------------------------------------------------------------
 
 const PLACEHOLDER_HREF = "/thatlink";
 
+const BRAND_NAME = "NovaChat";
 const HEADER_TITLE = "Untitled conversation";
 const CONNECTION_STATUS = "online"; // "online" | "syncing" | "offline"
 const CURRENT_USER = {
@@ -93,6 +98,21 @@ const DUMMY_NOTIFICATIONS = [
   { id: 3, title: "Chat shared", desc: "Your conversation was viewed 3 times.", time: "5h ago" },
 ];
 
+// Canvas is a single, high-intent destination (the live-editing surface),
+// so it gets a direct button rather than a dropdown.
+const CANVAS_LABEL = "Canvas";
+const CANVAS_HREF = "/htmlCanvas";
+
+// Extensions are multiple discrete integrations, so they live in a menu,
+// but the whole entry point still resolves to one browsing destination.
+const EXTENSIONS_HREF = "/extension";
+const DUMMY_EXTENSIONS = [
+  { id: "figma", name: "Figma", desc: "Import frames and comment on designs", enabled: true },
+  { id: "github", name: "GitHub", desc: "Open PRs and browse repos in chat", enabled: true },
+  { id: "notion", name: "Notion", desc: "Pull pages into context automatically", enabled: false },
+  { id: "linear", name: "Linear", desc: "Create and track issues", enabled: false },
+];
+
 const CONNECTION_CONFIG = {
   online: { label: "Online", dot: "bg-emerald-500", ring: "bg-emerald-500/30" },
   syncing: { label: "Syncing", dot: "bg-amber-500", ring: "bg-amber-500/30" },
@@ -106,6 +126,19 @@ export default function Header() {
   const [unread, setUnread] = useState(DUMMY_NOTIFICATIONS.length);
   const [notifOpen, setNotifOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [modelMenuOpen, setModelMenuOpen] = useState(false);
+  const modelHoverTimeout = useRef(null);
+
+  // Opens on hover with a short delay (so a passing cursor doesn't trigger
+  // it) and stays fully controllable by click as well.
+  const openModelMenuOnHover = useCallback(() => {
+    clearTimeout(modelHoverTimeout.current);
+    modelHoverTimeout.current = setTimeout(() => setModelMenuOpen(true), 120);
+  }, []);
+  const closeModelMenuOnLeave = useCallback(() => {
+    clearTimeout(modelHoverTimeout.current);
+    modelHoverTimeout.current = setTimeout(() => setModelMenuOpen(false), 150);
+  }, []);
 
   const connCfg = CONNECTION_CONFIG[CONNECTION_STATUS] ?? CONNECTION_CONFIG.online;
   const currentModel = AI_MODELS.find((m) => m.id === model) ?? AI_MODELS[0];
@@ -115,6 +148,7 @@ export default function Header() {
     .map((n) => n[0])
     .slice(0, 2)
     .join("");
+  const activeExtensions = DUMMY_EXTENSIONS.filter((e) => e.enabled).length;
 
   // ⌘K / Ctrl+K opens the search dialog
   useEffect(() => {
@@ -132,6 +166,8 @@ export default function Header() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  useEffect(() => () => clearTimeout(modelHoverTimeout.current), []);
 
   const handleShare = useCallback(async () => {
     try {
@@ -151,43 +187,56 @@ export default function Header() {
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="sticky top-0 z-50 w-full border-b border-neutral-200/70 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-neutral-950/70"
       >
-        <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-3 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 sm:px-6">
+          {/* ---------------- Brand ---------------- */}
+          <Link
+            href={PLACEHOLDER_HREF}
+            className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:ring-offset-neutral-950"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-sm shadow-blue-600/30">
+              <Sparkles className="h-4 w-4 text-white" />
+            </span>
+            <span className="hidden text-[15px] font-semibold tracking-tight text-neutral-900 dark:text-white sm:inline">
+              {BRAND_NAME}
+            </span>
+          </Link>
+
+          <Separator orientation="vertical" className="h-6 shrink-0 bg-neutral-200 dark:bg-white/10" />
+
           {/* ---------------- Title + connection status ---------------- */}
-          <div className="flex min-w-0 flex-col justify-center">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-              <h1 className="truncate text-sm font-semibold text-neutral-900 dark:text-white sm:text-[15px]">
-                {HEADER_TITLE}
-              </h1>
-            </div>
-            <div className="pl-6">
-              <div className="hidden items-center gap-1.5 sm:flex" aria-live="polite">
-                <span className="relative flex h-2 w-2">
-                  {CONNECTION_STATUS !== "offline" && (
-                    <span
-                      className={cn(
-                        "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
-                        connCfg.ring
-                      )}
-                    />
-                  )}
-                  <span className={cn("relative inline-flex h-2 w-2 rounded-full", connCfg.dot)} />
-                </span>
-                <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                  {connCfg.label}
-                </span>
-              </div>
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <MessageSquare className="hidden h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500 sm:block" />
+            <h1 className="truncate text-sm font-medium text-neutral-700 dark:text-neutral-200 sm:text-[15px]">
+              {HEADER_TITLE}
+            </h1>
+            <div className="hidden shrink-0 items-center gap-1.5 sm:flex" aria-live="polite">
+              <span className="relative flex h-2 w-2">
+                {CONNECTION_STATUS !== "offline" && (
+                  <span
+                    className={cn(
+                      "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
+                      connCfg.ring
+                    )}
+                  />
+                )}
+                <span className={cn("relative inline-flex h-2 w-2 rounded-full", connCfg.dot)} />
+              </span>
+              <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                {connCfg.label}
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* ---------------- Model selector ---------------- */}
-            <DropdownMenu>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            {/* ---------------- Model selector (click or hover) ---------------- */}
+            <DropdownMenu open={modelMenuOpen} onOpenChange={setModelMenuOpen}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
+                      onMouseEnter={openModelMenuOnHover}
+                      onMouseLeave={closeModelMenuOnLeave}
                       className="hidden h-9 items-center gap-2 rounded-xl border-neutral-200 bg-white/60 px-3 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200 dark:hover:bg-white/10 md:flex"
                     >
                       <CurrentModelIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -201,6 +250,8 @@ export default function Header() {
 
               <DropdownMenuContent
                 align="start"
+                onMouseEnter={openModelMenuOnHover}
+                onMouseLeave={closeModelMenuOnLeave}
                 className="w-64 rounded-xl border-neutral-200 dark:border-white/10 dark:bg-neutral-900"
               >
                 <DropdownMenuLabel className="text-xs font-medium uppercase tracking-wider text-neutral-400">
@@ -268,6 +319,87 @@ export default function Header() {
                 </CommandGroup>
               </CommandList>
             </CommandDialog>
+
+            {/* ---------------- Canvas ---------------- */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="hidden h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white lg:inline-flex"
+                >
+                  <Link href={CANVAS_HREF}>
+                    <PenSquare className="h-4 w-4" />
+                    {CANVAS_LABEL}
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Open canvas for this chat</TooltipContent>
+            </Tooltip>
+
+            {/* ---------------- Extensions ---------------- */}
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Extensions"
+                      className="relative hidden h-9 w-9 rounded-xl text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-white/10 dark:hover:text-white md:flex"
+                    >
+                      <Puzzle className="h-4 w-4" />
+                      {activeExtensions > 0 && (
+                        <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-neutral-950" />
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Extensions</TooltipContent>
+              </Tooltip>
+
+              <DropdownMenuContent
+                align="end"
+                className="w-72 rounded-xl border-neutral-200 p-0 dark:border-white/10 dark:bg-neutral-900"
+              >
+                <div className="flex items-center justify-between px-3 pb-1 pt-3">
+                  <span className="text-xs font-medium uppercase tracking-wider text-neutral-400">
+                    Extensions
+                  </span>
+                  <span className="text-[11px] font-medium text-neutral-400">
+                    {activeExtensions} connected
+                  </span>
+                </div>
+                <DropdownMenuSeparator />
+                {DUMMY_EXTENSIONS.map((ext) => (
+                  <DropdownMenuItem key={ext.id} asChild className="rounded-lg py-2">
+                    <Link href={EXTENSIONS_HREF} className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-500/10 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                        {ext.name[0]}
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                          {ext.name}
+                        </span>
+                        <span className="truncate text-xs text-neutral-400">{ext.desc}</span>
+                      </span>
+                      {ext.enabled ? (
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                      ) : (
+                        <span className="shrink-0 text-[11px] font-medium text-neutral-400">Add</span>
+                      )}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="gap-2 text-sm text-blue-600 dark:text-blue-400">
+                  <Link href={EXTENSIONS_HREF} className="flex items-center justify-between">
+                    Browse all extensions
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* ---------------- New chat ---------------- */}
             <Tooltip>
@@ -451,6 +583,16 @@ export default function Header() {
                 <DropdownMenuItem asChild className="gap-2">
                   <Link href={PLACEHOLDER_HREF}>
                     <Plus className="h-4 w-4" /> New chat
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-2">
+                  <Link href={CANVAS_HREF}>
+                    <PenSquare className="h-4 w-4" /> Canvas
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-2">
+                  <Link href={EXTENSIONS_HREF}>
+                    <Puzzle className="h-4 w-4" /> Extensions
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleShare} className="gap-2">
